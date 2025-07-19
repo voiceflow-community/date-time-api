@@ -33,7 +33,8 @@ A robust Node.js RESTful API server that provides timezone-related functionality
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/voiceflow-community/date-time-api.git
+
 cd timezone-api-server
 
 # Copy environment configuration
