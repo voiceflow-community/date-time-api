@@ -10,6 +10,7 @@ const configSchema = z.object({
   HOST: z.string().default('localhost'),
   HTTPS: z.string().default('false').transform(val => val === 'true'),
   PRODUCTION_URL: z.string().optional(),
+  SWAGGER_SHOW_ONLY_PRODUCTION: z.string().default('false').transform(val => val === 'true'),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   
   // API Configuration
@@ -99,6 +100,7 @@ export function getEnvironmentConfig() {
       host: config.HOST,
       https: config.HTTPS,
       productionUrl: config.PRODUCTION_URL,
+      swaggerShowOnlyProduction: config.SWAGGER_SHOW_ONLY_PRODUCTION,
     },
     api: {
       rateLimit: {

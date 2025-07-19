@@ -7,6 +7,14 @@ import { config } from '../config';
 function generateServerUrls(): OpenAPIV3.ServerObject[] {
   const servers: OpenAPIV3.ServerObject[] = [];
   
+  // If configured to show only production URL, return just that
+  if (config.SWAGGER_SHOW_ONLY_PRODUCTION && config.PRODUCTION_URL) {
+    return [{
+      url: config.PRODUCTION_URL,
+      description: 'Production server'
+    }];
+  }
+  
   // Current server URL (dynamic based on environment)
   const currentPort = config.PORT;
   const currentHost = config.HOST;
