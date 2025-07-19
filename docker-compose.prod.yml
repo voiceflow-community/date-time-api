@@ -1,0 +1,30 @@
+services:
+  timezone-api:
+    image: timezone-api-server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: always
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+      replicas: 1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.timezone-api.rule=Host(`api.yourdomain.com`)"
+      - "traefik.http.routers.timezone-api.tls=true"
+      - "traefik.http.routers.timezone-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.timezone-api.loadbalancer.server.port=3000"

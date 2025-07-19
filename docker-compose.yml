@@ -1,0 +1,56 @@
+services:
+  timezone-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: timezone-api-server
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - API_RATE_LIMIT_WINDOW_MS=${API_RATE_LIMIT_WINDOW_MS:-900000}
+      - API_RATE_LIMIT_MAX_REQUESTS=${API_RATE_LIMIT_MAX_REQUESTS:-100}
+      - HEALTH_CHECK_TIMEOUT=${HEALTH_CHECK_TIMEOUT:-5000}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - HELMET_ENABLED=${HELMET_ENABLED:-true}
+    env_file:
+      - .env
+    networks:
+      - timezone-api-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { hostname: 'localhost', port: 3000, path: '/health', timeout: 2000 }; const req = http.request(options, (res) => { if (res.statusCode === 200) { process.exit(0); } else { process.exit(1); } }); req.on('error', () => process.exit(1)); req.on('timeout', () => { req.destroy(); process.exit(1); }); req.setTimeout(2000); req.end();"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    volumes:
+      # Mount logs directory for persistent logging (optional)
+      - timezone-api-logs:/app/logs
+    labels:
+      - "com.timezone-api.description=Timezone API Server"
+      - "com.timezone-api.version=1.0.0"
+      - "com.timezone-api.maintainer=timezone-api-team"
+
+volumes:
+  timezone-api-logs:
+    driver: local
+    name: timezone-api-logs
+
+networks:
+  timezone-api-network:
+    driver: bridge
+    name: timezone-api-network
+    labels:
+      - "com.timezone-api.network=main"
