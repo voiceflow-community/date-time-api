@@ -609,3 +609,5 @@ For support and questions:
 ---
 
 **Built with ❤️ using Node.js, TypeScript, and Express.js**
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=voiceflow-community_date-time-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=voiceflow-community_date-time-api)
