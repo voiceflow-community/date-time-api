@@ -64,6 +64,40 @@ NODE_ENV=production
 PORT=3000
 ```
 
+### HOST
+- **Type**: String
+- **Default**: `localhost`
+- **Description**: Server host/interface to bind to
+
+```bash
+# Bind to localhost only (development)
+HOST=localhost
+
+# Bind to all interfaces (Docker/production)
+HOST=0.0.0.0
+
+# Bind to specific IP
+HOST=192.168.1.100
+```
+
+### HTTPS
+- **Type**: Boolean
+- **Default**: `false`
+- **Description**: Enable HTTPS protocol for server URLs
+
+```bash
+HTTPS=false
+```
+
+### PRODUCTION_URL
+- **Type**: String
+- **Optional**: Yes
+- **Description**: Production server URL for Swagger documentation
+
+```bash
+PRODUCTION_URL=https://api.yourdomain.com
+```
+
 ### LOG_LEVEL
 - **Type**: String
 - **Default**: `info`
@@ -331,6 +365,8 @@ NODE_OPTIONS="--experimental-modules"
 # .env.development
 NODE_ENV=development
 PORT=3000
+HOST=localhost
+HTTPS=false
 LOG_LEVEL=debug
 LOG_FORMAT=simple
 
@@ -357,6 +393,9 @@ COMPOSE_PROJECT_NAME=timezone-api-dev
 # .env.staging
 NODE_ENV=staging
 PORT=3000
+HOST=0.0.0.0
+HTTPS=false
+PRODUCTION_URL=https://staging-api.yourdomain.com
 LOG_LEVEL=warn
 LOG_FORMAT=json
 
@@ -385,6 +424,9 @@ COMPOSE_PROJECT_NAME=timezone-api-staging
 # .env.production
 NODE_ENV=production
 PORT=3000
+HOST=0.0.0.0
+HTTPS=true
+PRODUCTION_URL=https://api.yourdomain.com
 LOG_LEVEL=info
 LOG_FORMAT=json
 

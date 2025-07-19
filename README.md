@@ -529,6 +529,34 @@ docker compose logs --tail=100 timezone-api
 
 ## 📚 Documentation
 
+### Interactive API Documentation
+
+The API includes interactive Swagger/OpenAPI documentation that automatically adapts to your current server configuration:
+
+- **Development**: `http://localhost:3000/api/docs`
+- **Production**: `https://your-domain.com/api/docs`
+- **OpenAPI Spec**: Available at `/api/docs/openapi.json`
+
+#### Dynamic Server URLs
+
+The Swagger documentation automatically detects and displays the correct server URLs based on your environment:
+
+```bash
+# Development environment
+HOST=localhost PORT=3000 HTTPS=false
+# Shows: http://localhost:3000, http://0.0.0.0:3000
+
+# Production environment  
+HOST=0.0.0.0 PORT=3000 HTTPS=true PRODUCTION_URL=https://api.example.com
+# Shows: https://0.0.0.0:3000, https://api.example.com
+```
+
+Configure server URLs using environment variables:
+- `HOST`: Server host/interface (default: `localhost`)
+- `PORT`: Server port (default: `3000`)
+- `HTTPS`: Enable HTTPS protocol (default: `false`)
+- `PRODUCTION_URL`: Custom production URL for documentation
+
 ### Additional Documentation
 
 - **[API Examples](API_EXAMPLES.md)** - Comprehensive API usage examples with multiple programming languages

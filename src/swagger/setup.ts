@@ -30,7 +30,7 @@ const swaggerOptions: swaggerUi.SwaggerUiOptions = {
  * @param app Express application instance
  */
 export function setupSwagger(app: Express): void {
-  // Serve the OpenAPI spec as JSON
+  // Serve the OpenAPI spec as JSON (dynamically generated)
   app.get('/api/docs/openapi.json', (_req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(openApiSpec);
@@ -43,8 +43,14 @@ export function setupSwagger(app: Express): void {
     swaggerUi.setup(openApiSpec, swaggerOptions)
   );
 
+  // Log available servers
+  const servers = openApiSpec.servers || [];
   console.log('📚 Swagger documentation available at /api/docs');
   console.log('📄 OpenAPI spec available at /api/docs/openapi.json');
+  console.log('🌐 Available servers:');
+  servers.forEach((server, index) => {
+    console.log(`  ${index + 1}. ${server.url} - ${server.description}`);
+  });
 }
 
 /**

@@ -1,4 +1,56 @@
 import { OpenAPIV3 } from 'openapi-types';
+import { config } from '../config';
+
+/**
+ * Generate server URLs based on current environment and configuration
+ */
+function generateServerUrls(): OpenAPIV3.ServerObject[] {
+  const servers: OpenAPIV3.ServerObject[] = [];
+  
+  // Current server URL (dynamic based on environment)
+  const currentPort = config.PORT;
+  const currentHost = config.HOST;
+  const protocol = config.HTTPS ? 'https' : 'http';
+  
+  // Add current server as primary
+  const currentUrl = `${protocol}://${currentHost}:${currentPort}`;
+  servers.push({
+    url: currentUrl,
+    description: `Current server (${config.NODE_ENV})`
+  });
+  
+  // Add environment-specific servers
+  if (config.NODE_ENV === 'development') {
+    // Add localhost alternatives for development
+    if (currentHost !== 'localhost') {
+      servers.push({
+        url: `http://localhost:${currentPort}`,
+        description: 'Local development server'
+      });
+    }
+    if (currentHost !== '0.0.0.0') {
+      servers.push({
+        url: `http://0.0.0.0:${currentPort}`,
+        description: 'Docker development server'
+      });
+    }
+  } else if (config.NODE_ENV === 'production') {
+    // Add production server URL if different from current
+    if (config.PRODUCTION_URL && config.PRODUCTION_URL !== currentUrl) {
+      servers.push({
+        url: config.PRODUCTION_URL,
+        description: 'Production server'
+      });
+    }
+  }
+  
+  // Remove duplicates
+  const uniqueServers = servers.filter((server, index, self) => 
+    index === self.findIndex(s => s.url === server.url)
+  );
+  
+  return uniqueServers;
+}
 
 /**
  * OpenAPI 3.0 specification for the Timezone API Server
@@ -18,16 +70,7 @@ export const openApiSpec: OpenAPIV3.Document = {
       url: 'https://opensource.org/licenses/MIT'
     }
   },
-  servers: [
-    {
-      url: 'http://localhost:3000',
-      description: 'Development server'
-    },
-    {
-      url: 'https://api.example.com',
-      description: 'Production server'
-    }
-  ],
+  servers: generateServerUrls(),
   paths: {
     '/api/time/current/{timezone}': {
       get: {

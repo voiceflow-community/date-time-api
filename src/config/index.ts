@@ -7,6 +7,9 @@ const configSchema = z.object({
   // Application Configuration
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().min(1).max(65535).default(3000),
+  HOST: z.string().default('localhost'),
+  HTTPS: z.string().default('false').transform(val => val === 'true'),
+  PRODUCTION_URL: z.string().optional(),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   
   // API Configuration
@@ -93,6 +96,9 @@ export function getEnvironmentConfig() {
       version: process.env['npm_package_version'] || '1.0.0',
       environment: config.NODE_ENV,
       port: config.PORT,
+      host: config.HOST,
+      https: config.HTTPS,
+      productionUrl: config.PRODUCTION_URL,
     },
     api: {
       rateLimit: {

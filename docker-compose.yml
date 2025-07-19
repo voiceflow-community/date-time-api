@@ -11,6 +11,9 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=3000
+      - HOST=${HOST:-0.0.0.0}
+      - HTTPS=${HTTPS:-false}
+      - PRODUCTION_URL=${PRODUCTION_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - API_RATE_LIMIT_WINDOW_MS=${API_RATE_LIMIT_WINDOW_MS:-900000}
       - API_RATE_LIMIT_MAX_REQUESTS=${API_RATE_LIMIT_MAX_REQUESTS:-100}
