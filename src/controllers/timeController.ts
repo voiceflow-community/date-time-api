@@ -14,17 +14,27 @@ export async function getCurrentTime(
 ): Promise<void> {
   try {
     // Extract timezone from either params (GET) or body (POST)
-    let timezone: string;
+    let timezone: string | undefined;
     
     if (req.method === 'GET') {
-      timezone = req.params.timezone;
+      timezone = req.params['timezone'];
     } else {
       // For POST requests
       timezone = req.body.timezone;
     }
 
-    // Get current time from service (timezone is validated by middleware)
-    const timeResponse = await timezoneService.getCurrentTime(timezone!);
+    // Ensure timezone is defined (validation middleware should catch this before it gets here)
+    if (!timezone) {
+      throw new TimezoneError(
+        'Timezone parameter is required',
+        'MISSING_TIMEZONE',
+        400,
+        [{ field: 'timezone', message: 'Timezone is required', code: 'REQUIRED' }]
+      );
+    }
+
+    // Get current time from service
+    const timeResponse = await timezoneService.getCurrentTime(timezone);
 
     // Return successful response
     res.status(200).json(timeResponse);
