@@ -113,6 +113,18 @@ export const timezoneParamSchema = z.object({
 });
 
 /**
+ * Schema for current time POST request body validation
+ */
+export const currentTimeRequestSchema = z.object({
+  timezone: z.string()
+    .min(1, "Timezone is required")
+    .max(100, "Timezone identifier too long")
+    .refine(isValidTimezone, {
+      message: "Invalid timezone identifier. Use IANA timezone format (e.g., 'America/New_York')"
+    })
+});
+
+/**
  * Schema for time conversion request validation
  */
 export const conversionRequestSchema = z.object({
@@ -211,6 +223,7 @@ export const healthResponseSchema = z.object({
 // ============================================================================
 
 export type TimezoneParam = z.infer<typeof timezoneParamSchema>;
+export type CurrentTimeRequest = z.infer<typeof currentTimeRequestSchema>;
 export type ConversionRequestInput = z.infer<typeof conversionRequestSchema>;
 export type ErrorResponseData = z.infer<typeof errorResponseSchema>;
 export type TimeResponseData = z.infer<typeof timeResponseSchema>;

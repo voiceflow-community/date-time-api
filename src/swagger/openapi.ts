@@ -82,9 +82,9 @@ export const openApiSpec: OpenAPIV3.Document = {
   paths: {
     '/api/time/current/{timezone}': {
       get: {
-        summary: 'Get current time in specified timezone',
-        description: 'Retrieves the current date and time in the specified timezone with formatting and UTC offset information.',
-        operationId: 'getCurrentTime',
+        summary: 'Get current time in specified timezone (GET)',
+        description: 'Retrieves the current date and time in the specified timezone with formatting and UTC offset information. Note: Some timezone identifiers may cause URL encoding issues; consider using the POST endpoint instead.',
+        operationId: 'getCurrentTimeGet',
         tags: ['Time Operations'],
         parameters: [
           {
@@ -132,6 +132,112 @@ export const openApiSpec: OpenAPIV3.Document = {
                         date: '2024-01-15',
                         time: '09:30:00',
                         full: 'January 15, 2024 at 9:30:00 AM EST'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '400': {
+            description: 'Invalid timezone parameter',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse'
+                },
+                examples: {
+                  'invalid-timezone': {
+                    summary: 'Invalid timezone format',
+                    value: {
+                      error: {
+                        code: 'INVALID_TIMEZONE',
+                        message: 'Invalid timezone identifier. Use IANA timezone format (e.g., America/New_York)',
+                        timestamp: '2024-01-15T14:30:00.000Z'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '500': {
+            description: 'Internal server error',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/api/time/current': {
+      post: {
+        summary: 'Get current time in specified timezone (POST)',
+        description: 'Retrieves the current date and time in the specified timezone with formatting and UTC offset information. This endpoint is recommended for timezone identifiers that may cause URL encoding issues.',
+        operationId: 'getCurrentTimePost',
+        tags: ['Time Operations'],
+        requestBody: {
+          required: true,
+          description: 'Timezone request parameters',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['timezone'],
+                properties: {
+                  timezone: {
+                    type: 'string',
+                    description: 'IANA timezone identifier',
+                    example: 'Europe/Paris'
+                  }
+                }
+              },
+              examples: {
+                'paris': {
+                  summary: 'Paris timezone',
+                  value: {
+                    timezone: 'Europe/Paris'
+                  }
+                },
+                'tokyo': {
+                  summary: 'Tokyo timezone',
+                  value: {
+                    timezone: 'Asia/Tokyo'
+                  }
+                },
+                'new-york': {
+                  summary: 'New York timezone',
+                  value: {
+                    timezone: 'America/New_York'
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Current time retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/TimeResponse'
+                },
+                examples: {
+                  'paris-time': {
+                    summary: 'Current time in Paris',
+                    value: {
+                      timestamp: '2024-01-15T14:30:00.000Z',
+                      timezone: 'Europe/Paris',
+                      utcOffset: '+01:00',
+                      formatted: {
+                        date: '2024-01-15',
+                        time: '15:30:00',
+                        full: 'January 15, 2024 at 3:30:00 PM CET'
                       }
                     }
                   }

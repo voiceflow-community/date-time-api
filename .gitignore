@@ -206,3 +206,5 @@ pnpm-lock.yaml
 
 # Keep example environment file
 !.env.example
+
+.kiro/

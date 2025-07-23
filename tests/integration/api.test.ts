@@ -166,6 +166,170 @@ describe('API Integration Tests', () => {
     });
   });
 
+  describe('Current Time Endpoint - POST /api/time/current', () => {
+    describe('Successful Requests', () => {
+      it('should return current time for valid timezone (Europe/Paris)', async () => {
+        const requestBody = {
+          timezone: 'Europe/Paris'
+        };
+
+        const response = await request(app)
+          .post('/api/time/current')
+          .send(requestBody)
+          .expect('Content-Type', /json/)
+          .expect(200);
+
+        // Validate response structure
+        expect(response.body).toHaveProperty('timestamp');
+        expect(response.body).toHaveProperty('timezone');
+        expect(response.body).toHaveProperty('utcOffset');
+        expect(response.body).toHaveProperty('formatted');
+
+        // Validate formatted object structure
+        expect(response.body.formatted).toHaveProperty('date');
+        expect(response.body.formatted).toHaveProperty('time');
+        expect(response.body.formatted).toHaveProperty('full');
+
+        // Validate data types
+        expect(typeof response.body.timestamp).toBe('string');
+        expect(typeof response.body.timezone).toBe('string');
+        expect(typeof response.body.utcOffset).toBe('string');
+        expect(typeof response.body.formatted.date).toBe('string');
+        expect(typeof response.body.formatted.time).toBe('string');
+        expect(typeof response.body.formatted.full).toBe('string');
+
+        // Validate specific values
+        expect(response.body.timezone).toBe('Europe/Paris');
+        expect(response.body.utcOffset).toMatch(/^[+-]\d{2}:\d{2}$/);
+        
+        // Validate timestamp is valid ISO 8601
+        expect(() => new Date(response.body.timestamp)).not.toThrow();
+        expect(new Date(response.body.timestamp).toISOString()).toBe(response.body.timestamp);
+      });
+
+      it('should return current time for UTC timezone', async () => {
+        const requestBody = {
+          timezone: 'UTC'
+        };
+
+        const response = await request(app)
+          .post('/api/time/current')
+          .send(requestBody)
+          .expect(200);
+
+        expect(response.body.timezone).toBe('UTC');
+        expect(response.body.utcOffset).toBe('+00:00');
+      });
+
+      it('should handle timezone with special characters', async () => {
+        const requestBody = {
+          timezone: 'America/Argentina/Buenos_Aires'
+        };
+
+        const response = await request(app)
+          .post('/api/time/current')
+          .send(requestBody)
+          .expect(200);
+
+        expect(response.body.timezone).toBe('America/Argentina/Buenos_Aires');
+      });
+    });
+
+    describe('Error Handling', () => {
+      it('should return 400 for invalid timezone format', async () => {
+        const requestBody = {
+          timezone: 'InvalidTimezone'
+        };
+
+        const response = await request(app)
+          .post('/api/time/current')
+          .send(requestBody)
+          .expect('Content-Type', /json/)
+          .expect(400);
+
+        // Validate error response structure
+        expect(response.body).toHaveProperty('error');
+        expect(response.body.error).toHaveProperty('code');
+        expect(response.body.error).toHaveProperty('message');
+        expect(response.body.error).toHaveProperty('timestamp');
+
+        // Validate error details
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        expect(response.body.error.message).toContain('validation failed');
+        expect(response.body.error.details).toBeDefined();
+        expect(Array.isArray(response.body.error.details)).toBe(true);
+      });
+
+      it('should return 400 for missing timezone parameter', async () => {
+        const response = await request(app)
+          .post('/api/time/current')
+          .send({})
+          .expect(400);
+
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        expect(response.body.error.details).toBeDefined();
+        
+        // Check that timezone validation failed
+        const timezoneError = response.body.error.details.find((d: any) => d.field === 'timezone');
+        expect(timezoneError).toBeDefined();
+      });
+
+      it('should return 400 for timezone with invalid characters', async () => {
+        const requestBody = {
+          timezone: 'Invalid@Timezone!'
+        };
+
+        const response = await request(app)
+          .post('/api/time/current')
+          .send(requestBody)
+          .expect(400);
+
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      });
+
+      it('should return 400 for non-existent timezone', async () => {
+        const requestBody = {
+          timezone: 'Fake/NonExistent'
+        };
+
+        const response = await request(app)
+          .post('/api/time/current')
+          .send(requestBody)
+          .expect(400);
+
+        expect(response.body.error.code).toMatch(/VALIDATION_ERROR|INVALID_TIMEZONE/);
+      });
+    });
+
+    describe('Response Headers and Metadata', () => {
+      it('should return proper content-type header', async () => {
+        const requestBody = {
+          timezone: 'UTC'
+        };
+
+        const response = await request(app)
+          .post('/api/time/current')
+          .send(requestBody)
+          .expect(200);
+
+        expect(response.headers['content-type']).toMatch(/application\/json/);
+      });
+
+      it('should include CORS headers', async () => {
+        const requestBody = {
+          timezone: 'UTC'
+        };
+
+        const response = await request(app)
+          .post('/api/time/current')
+          .send(requestBody)
+          .expect(200);
+
+        expect(response.headers).toHaveProperty('access-control-allow-origin');
+      });
+    });
+  });
+
   describe('Time Conversion Endpoint - POST /api/time/convert', () => {
     describe('Successful Requests', () => {
       it('should convert time between timezones successfully', async () => {

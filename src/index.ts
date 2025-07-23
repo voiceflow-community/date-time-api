@@ -8,7 +8,7 @@ import { getCurrentTime, convertTime } from './controllers/timeController';
 import { getHealth } from './controllers/healthController';
 import { getMetrics, getMetricsJson } from './controllers/metricsController';
 import { setupSwagger } from './swagger/setup';
-import { timezoneParamSchema, conversionRequestSchema } from './types/index';
+import { timezoneParamSchema, conversionRequestSchema, currentTimeRequestSchema } from './types/index';
 import { config, validateProductionConfig, getEnvironmentConfig } from './config/index';
 import { logger, createRequestLogger } from './utils/logger';
 import { createMetricsMiddleware } from './utils/metrics';
@@ -91,10 +91,17 @@ if (config.METRICS_ENABLED) {
 
 // API Routes with validation middleware
 
-// Current time endpoint
+// Current time endpoints
 app.get(
   '/api/time/current/:timezone',
   validateRequest({ params: timezoneParamSchema }),
+  getCurrentTime
+);
+
+// New POST endpoint for current time
+app.post(
+  '/api/time/current',
+  validateRequest({ body: currentTimeRequestSchema }),
   getCurrentTime
 );
 

@@ -5,6 +5,7 @@ import { ErrorResponse } from '../types/index';
 /**
  * Controller for handling current time requests
  * GET /api/time/current/{timezone}
+ * POST /api/time/current with { "timezone": "..." }
  */
 export async function getCurrentTime(
   req: Request,
@@ -12,7 +13,15 @@ export async function getCurrentTime(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { timezone } = req.params;
+    // Extract timezone from either params (GET) or body (POST)
+    let timezone: string;
+    
+    if (req.method === 'GET') {
+      timezone = req.params.timezone;
+    } else {
+      // For POST requests
+      timezone = req.body.timezone;
+    }
 
     // Get current time from service (timezone is validated by middleware)
     const timeResponse = await timezoneService.getCurrentTime(timezone!);

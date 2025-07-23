@@ -62,7 +62,9 @@ Date: Mon, 15 Jan 2024 10:30:00 GMT
 
 ## 🌍 Current Time API
 
-### Get Current Time in UTC
+### Get Current Time Using GET Endpoint
+
+#### Get Current Time in UTC
 
 ```bash
 curl "http://localhost:3000/api/time/current/UTC"
@@ -82,7 +84,7 @@ curl "http://localhost:3000/api/time/current/UTC"
 }
 ```
 
-### Get Current Time in New York
+#### Get Current Time in New York
 
 ```bash
 curl "http://localhost:3000/api/time/current/America%2FNew_York"
@@ -102,7 +104,7 @@ curl "http://localhost:3000/api/time/current/America%2FNew_York"
 }
 ```
 
-### Get Current Time in London
+#### Get Current Time in London
 
 ```bash
 curl "http://localhost:3000/api/time/current/Europe%2FLondon"
@@ -122,10 +124,38 @@ curl "http://localhost:3000/api/time/current/Europe%2FLondon"
 }
 ```
 
-### Get Current Time in Tokyo
+### Get Current Time Using POST Endpoint (Recommended for Complex Timezone Names)
+
+The POST endpoint is recommended for timezone identifiers that may cause URL encoding issues.
+
+#### Get Current Time in Paris
 
 ```bash
-curl "http://localhost:3000/api/time/current/Asia%2FTokyo"
+curl -X POST http://localhost:3000/api/time/current \
+  -H "Content-Type: application/json" \
+  -d '{"timezone": "Europe/Paris"}'
+```
+
+**Response:**
+```json
+{
+  "timestamp": "2024-01-15T15:30:00.000Z",
+  "timezone": "Europe/Paris",
+  "utcOffset": "+01:00",
+  "formatted": {
+    "date": "2024-01-15",
+    "time": "16:30:00",
+    "full": "January 15, 2024 at 4:30:00 PM CET"
+  }
+}
+```
+
+#### Get Current Time in Tokyo
+
+```bash
+curl -X POST http://localhost:3000/api/time/current \
+  -H "Content-Type: application/json" \
+  -d '{"timezone": "Asia/Tokyo"}'
 ```
 
 **Response:**
@@ -142,23 +172,41 @@ curl "http://localhost:3000/api/time/current/Asia%2FTokyo"
 }
 ```
 
+#### Get Current Time with Complex Timezone Names
+
+```bash
+curl -X POST http://localhost:3000/api/time/current \
+  -H "Content-Type: application/json" \
+  -d '{"timezone": "America/Argentina/Buenos_Aires"}'
+```
+
 ### Common Timezone Examples
 
 ```bash
+# Using GET endpoint
 # Pacific Time
 curl "http://localhost:3000/api/time/current/America%2FLos_Angeles"
 
+# Using POST endpoint (recommended for complex timezone names)
 # Central European Time
-curl "http://localhost:3000/api/time/current/Europe%2FParis"
+curl -X POST http://localhost:3000/api/time/current \
+  -H "Content-Type: application/json" \
+  -d '{"timezone": "Europe/Paris"}'
 
 # Australian Eastern Time
-curl "http://localhost:3000/api/time/current/Australia%2FSydney"
+curl -X POST http://localhost:3000/api/time/current \
+  -H "Content-Type: application/json" \
+  -d '{"timezone": "Australia/Sydney"}'
 
 # India Standard Time
-curl "http://localhost:3000/api/time/current/Asia%2FKolkata"
+curl -X POST http://localhost:3000/api/time/current \
+  -H "Content-Type: application/json" \
+  -d '{"timezone": "Asia/Kolkata"}'
 
 # Brazil Time
-curl "http://localhost:3000/api/time/current/America%2FSao_Paulo"
+curl -X POST http://localhost:3000/api/time/current \
+  -H "Content-Type: application/json" \
+  -d '{"timezone": "America/Sao_Paulo"}'
 ```
 
 ## 🔄 Time Conversion API
@@ -368,10 +416,33 @@ When rate limit is exceeded:
 ### JavaScript/Node.js
 
 ```javascript
-// Using fetch API
-async function getCurrentTime(timezone) {
+// Using fetch API - GET endpoint
+async function getCurrentTimeGet(timezone) {
   try {
     const response = await fetch(`http://localhost:3000/api/time/current/${encodeURIComponent(timezone)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching current time:', error);
+    throw error;
+  }
+}
+
+// Using fetch API - POST endpoint (recommended for complex timezone names)
+async function getCurrentTimePost(timezone) {
+  try {
+    const response = await fetch('http://localhost:3000/api/time/current', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ timezone })
+    });
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -412,8 +483,12 @@ async function convertTime(sourceTime, sourceTimezone, targetTimezone) {
 }
 
 // Usage examples
-getCurrentTime('America/New_York')
-  .then(data => console.log('Current time in NY:', data))
+getCurrentTimeGet('America/New_York')
+  .then(data => console.log('Current time in NY (GET):', data))
+  .catch(error => console.error('Error:', error));
+
+getCurrentTimePost('Europe/Paris')
+  .then(data => console.log('Current time in Paris (POST):', data))
   .catch(error => console.error('Error:', error));
 
 convertTime('2024-01-15T14:30:00', 'UTC', 'Asia/Tokyo')
@@ -430,12 +505,28 @@ from urllib.parse import quote
 
 BASE_URL = 'http://localhost:3000'
 
-def get_current_time(timezone):
-    """Get current time in specified timezone"""
+def get_current_time_get(timezone):
+    """Get current time in specified timezone using GET endpoint"""
     url = f"{BASE_URL}/api/time/current/{quote(timezone)}"
     
     try:
         response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching current time: {e}")
+        raise
+
+def get_current_time_post(timezone):
+    """Get current time in specified timezone using POST endpoint (recommended for complex timezone names)"""
+    url = f"{BASE_URL}/api/time/current"
+    
+    payload = {
+        'timezone': timezone
+    }
+    
+    try:
+        response = requests.post(url, json=payload)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -462,9 +553,13 @@ def convert_time(source_time, source_timezone, target_timezone):
 
 # Usage examples
 try:
-    # Get current time in New York
-    ny_time = get_current_time('America/New_York')
-    print(f"Current time in NY: {ny_time['formatted']['full']}")
+    # Get current time in New York using GET endpoint
+    ny_time = get_current_time_get('America/New_York')
+    print(f"Current time in NY (GET): {ny_time['formatted']['full']}")
+    
+    # Get current time in Paris using POST endpoint
+    paris_time = get_current_time_post('Europe/Paris')
+    print(f"Current time in Paris (POST): {paris_time['formatted']['full']}")
     
     # Convert time
     converted = convert_time('2024-01-15T14:30:00', 'UTC', 'Asia/Tokyo')
@@ -530,9 +625,15 @@ fi
 ```bash
 #!/bin/bash
 
-# Test current time endpoint
-echo "Testing current time endpoint..."
+# Test current time GET endpoint
+echo "Testing current time GET endpoint..."
 curl -s "http://localhost:3000/api/time/current/UTC" | jq .
+
+# Test current time POST endpoint
+echo "Testing current time POST endpoint..."
+curl -s -X POST http://localhost:3000/api/time/current \
+  -H "Content-Type: application/json" \
+  -d '{"timezone": "Europe/Paris"}' | jq .
 
 # Test time conversion endpoint
 echo "Testing time conversion endpoint..."
