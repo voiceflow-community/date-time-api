@@ -49,13 +49,13 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
 
     it('should have proper HTTP methods for each endpoint', () => {
       const paths = openApiSpec.paths;
-      
+
       // Current time endpoint should have GET method
       expect(paths['/api/time/current/{timezone}']).toHaveProperty('get');
-      
+
       // Convert time endpoint should have POST method
       expect(paths['/api/time/convert']).toHaveProperty('post');
-      
+
       // Health endpoint should have GET method
       expect(paths['/health']).toHaveProperty('get');
     });
@@ -122,7 +122,7 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
           expect(response.body).toHaveProperty('timezone');
           expect(response.body).toHaveProperty('utcOffset');
           expect(response.body).toHaveProperty('formatted');
-          
+
           expect(response.body.formatted).toHaveProperty('date');
           expect(response.body.formatted).toHaveProperty('time');
           expect(response.body.formatted).toHaveProperty('full');
@@ -137,7 +137,7 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
 
           // Validate timezone format
           expect(response.body.timezone).toBe('America/New_York');
-          
+
           // Validate UTC offset format (±HH:MM)
           expect(response.body.utcOffset).toMatch(/^[+-]\d{2}:\d{2}$/);
         } else {
@@ -172,23 +172,23 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
       it('should validate all possible HTTP status codes defined in OpenAPI', async () => {
         const currentTimeEndpoint = openApiSpec.paths['/api/time/current/{timezone}']?.get;
         const definedStatusCodes = Object.keys(currentTimeEndpoint?.responses || {});
-        
+
         // Test 200 response
         if (definedStatusCodes.includes('200')) {
           const response = await request(app)
             .get('/api/time/current/UTC')
             .expect(200);
-          
+
           expect(response.body).toHaveProperty('timestamp');
           expect(response.body).toHaveProperty('timezone');
         }
-        
+
         // Test 400 response
         if (definedStatusCodes.includes('400')) {
           const response = await request(app)
             .get('/api/time/current/InvalidTimezone')
             .expect(400);
-          
+
           expect(response.body.error.code).toBeDefined();
         }
       });
@@ -196,13 +196,13 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
       it('should validate parameter constraints from OpenAPI spec', async () => {
         const currentTimeEndpoint = openApiSpec.paths['/api/time/current/{timezone}']?.get;
         const timezoneParam = currentTimeEndpoint?.parameters?.[0];
-        
+
         if (timezoneParam?.schema) {
           // Test parameter validation based on schema constraints
           const response = await request(app)
             .get('/api/time/current/')
             .expect(404); // Missing required parameter
-          
+
           expect(response.body.error.code).toBe('NOT_FOUND');
         }
       });
@@ -379,11 +379,11 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
   describe('Schema Reference Validation', () => {
     it('should have all schema references properly defined', () => {
       const schemas = openApiSpec.components?.schemas;
-      
+
       // Extract all $ref values from the specification
       const specString = JSON.stringify(openApiSpec);
       const refMatches = specString.match(/"\$ref":\s*"#\/components\/schemas\/([^"]+)"/g);
-      
+
       if (refMatches) {
         const referencedSchemas = refMatches.map(match => {
           const schemaName = match.match(/schemas\/([^"]+)/)?.[1];
@@ -399,12 +399,12 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
 
     it('should have proper schema structure for all defined schemas', () => {
       const schemas = openApiSpec.components?.schemas;
-      
+
       Object.keys(schemas || {}).forEach(schemaName => {
         const schema = schemas![schemaName];
         expect(schema).toHaveProperty('type');
         expect(schema).toHaveProperty('properties');
-        
+
         // Check if required fields are properly defined
         if ('required' in schema && schema.required) {
           expect(Array.isArray(schema.required)).toBe(true);
@@ -544,7 +544,7 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
       it('should validate parameter schemas for path parameters', async () => {
         const currentTimeEndpoint = openApiSpec.paths['/api/time/current/{timezone}']?.get;
         const timezoneParam = currentTimeEndpoint?.parameters?.[0];
-        
+
         expect(timezoneParam).toBeDefined();
         expect(timezoneParam?.name).toBe('timezone');
         expect(timezoneParam?.in).toBe('path');
@@ -569,19 +569,19 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
     describe('HTTP Status Code Compliance', () => {
       it('should return only status codes defined in OpenAPI spec', async () => {
         const paths = openApiSpec.paths;
-        
+
         // Test current time endpoint
         const currentTimeEndpoint = paths['/api/time/current/{timezone}']?.get;
         const currentTimeStatusCodes = Object.keys(currentTimeEndpoint?.responses || {}).map(Number);
-        
+
         // Valid timezone should return 200
-        const validResponse = await request(app)
+        await request(app)
           .get('/api/time/current/UTC')
           .expect(200);
         expect(currentTimeStatusCodes).toContain(200);
 
         // Invalid timezone should return 400
-        const invalidResponse = await request(app)
+        await request(app)
           .get('/api/time/current/InvalidTimezone')
           .expect(400);
         expect(currentTimeStatusCodes).toContain(400);
@@ -591,7 +591,7 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
         const convertStatusCodes = Object.keys(convertEndpoint?.responses || {}).map(Number);
 
         // Valid conversion should return 200
-        const validConversionResponse = await request(app)
+        await request(app)
           .post('/api/time/convert')
           .send({
             sourceTime: '2024-01-15T14:30:00',
@@ -661,7 +661,7 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
     describe('API Documentation Completeness', () => {
       it('should have descriptions for all endpoints', () => {
         const paths = openApiSpec.paths;
-        
+
         Object.keys(paths).forEach(pathKey => {
           const pathItem = paths[pathKey];
           Object.keys(pathItem).forEach(method => {
@@ -673,7 +673,7 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
 
       it('should have examples for all request/response schemas', () => {
         const paths = openApiSpec.paths;
-        
+
         // Check that POST endpoints have request body examples
         const postEndpoints = Object.keys(paths).filter(path => paths[path].post);
         postEndpoints.forEach(path => {
@@ -700,7 +700,7 @@ describe('Swagger/OpenAPI Documentation Integration Tests', () => {
 
       it('should have proper tags for endpoint organization', () => {
         const paths = openApiSpec.paths;
-        
+
         Object.keys(paths).forEach(pathKey => {
           const pathItem = paths[pathKey];
           Object.keys(pathItem).forEach(method => {

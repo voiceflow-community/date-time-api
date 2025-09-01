@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { execSync, spawn, ChildProcess } from 'child_process';
+import { execSync } from 'child_process';
 import http from 'http';
 
 describe('Docker Container Tests', () => {
@@ -10,7 +10,7 @@ describe('Docker Container Tests', () => {
   beforeAll(async () => {
     // Build the Docker image
     console.log('Building Docker image...');
-    execSync('docker build -t timezone-api-server:test .', { 
+    execSync('docker build -t timezone-api-server:test .', {
       stdio: 'inherit',
       timeout: 120000 // 2 minutes timeout for build
     });
@@ -48,10 +48,10 @@ describe('Docker Container Tests', () => {
 
   it('should respond to health check endpoint', async () => {
     const response = await makeHttpRequest(`http://localhost:${testPort}/health`);
-    
+
     expect(response.statusCode).toBe(200);
     expect(response.data).toContain('status');
-    
+
     const healthData = JSON.parse(response.data);
     expect(healthData.status).toBe('healthy');
     expect(healthData.uptime).toBeGreaterThan(0);
@@ -61,9 +61,9 @@ describe('Docker Container Tests', () => {
 
   it('should respond to current time endpoint', async () => {
     const response = await makeHttpRequest(`http://localhost:${testPort}/api/time/current/America/New_York`);
-    
+
     expect(response.statusCode).toBe(200);
-    
+
     const timeData = JSON.parse(response.data);
     expect(timeData.timestamp).toBeDefined();
     expect(timeData.timezone).toBe('America/New_York');
@@ -83,9 +83,9 @@ describe('Docker Container Tests', () => {
       'POST',
       requestBody
     );
-    
+
     expect(response.statusCode).toBe(200);
-    
+
     const conversionData = JSON.parse(response.data);
     expect(conversionData.original).toBeDefined();
     expect(conversionData.converted).toBeDefined();
@@ -95,16 +95,16 @@ describe('Docker Container Tests', () => {
 
   it('should serve Swagger documentation', async () => {
     const response = await makeHttpRequest(`http://localhost:${testPort}/api/docs`);
-    
+
     expect(response.statusCode).toBe(200);
     expect(response.data).toContain('swagger-ui');
   });
 
   it('should handle invalid requests properly', async () => {
     const response = await makeHttpRequest(`http://localhost:${testPort}/api/time/current/Invalid_Timezone`);
-    
+
     expect(response.statusCode).toBe(400);
-    
+
     const errorData = JSON.parse(response.data);
     expect(errorData.error).toBeDefined();
     expect(errorData.error.code).toBeDefined();
@@ -144,7 +144,7 @@ describe('Docker Container Tests', () => {
 // Helper function to wait for container to be ready
 async function waitForContainer(port: number, timeout: number): Promise<void> {
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < timeout) {
     try {
       await makeHttpRequest(`http://localhost:${port}/health`);
@@ -154,14 +154,14 @@ async function waitForContainer(port: number, timeout: number): Promise<void> {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
-  
+
   throw new Error(`Container did not become ready within ${timeout}ms`);
 }
 
 // Helper function to make HTTP requests
 function makeHttpRequest(
-  url: string, 
-  method: 'GET' | 'POST' = 'GET', 
+  url: string,
+  method: 'GET' | 'POST' = 'GET',
   body?: string
 ): Promise<{ statusCode: number; data: string }> {
   return new Promise((resolve, reject) => {
@@ -180,11 +180,11 @@ function makeHttpRequest(
 
     const req = http.request(options, (res) => {
       let data = '';
-      
+
       res.on('data', (chunk) => {
         data += chunk;
       });
-      
+
       res.on('end', () => {
         resolve({
           statusCode: res.statusCode || 0,
@@ -205,7 +205,7 @@ function makeHttpRequest(
     if (body) {
       req.write(body);
     }
-    
+
     req.end();
   });
 }

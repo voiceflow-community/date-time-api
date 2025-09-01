@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import { getHealth } from '../../src/controllers/healthController.js';
@@ -11,10 +11,10 @@ describe('Health Monitoring Integration Tests', () => {
     // Create Express app for testing
     app = express();
     app.use(express.json());
-    
+
     // Add health endpoint
     app.get('/health', getHealth);
-    
+
     // Add error handler
     app.use(errorHandler);
   });
@@ -63,7 +63,7 @@ describe('Health Monitoring Integration Tests', () => {
       expect(memory.total).toBeGreaterThanOrEqual(0);
       expect(memory.percentage).toBeGreaterThanOrEqual(0);
       expect(memory.percentage).toBeLessThanOrEqual(100);
-      
+
       // If total > 0, percentage should be calculated correctly
       if (memory.total > 0) {
         const expectedPercentage = Math.round((memory.used / memory.total) * 100);
@@ -80,7 +80,7 @@ describe('Health Monitoring Integration Tests', () => {
       // Assert
       const timestamp = response.body.timestamp;
       const parsedDate = new Date(timestamp);
-      
+
       expect(parsedDate.toISOString()).toBe(timestamp);
       expect(parsedDate.getTime()).toBeGreaterThan(Date.now() - 5000); // Within last 5 seconds
     });
@@ -97,7 +97,7 @@ describe('Health Monitoring Integration Tests', () => {
 
     it('should handle multiple concurrent requests', async () => {
       // Arrange
-      const requests = Array(10).fill(null).map(() => 
+      const requests = Array(10).fill(null).map(() =>
         request(app).get('/health')
       );
 
@@ -123,10 +123,10 @@ describe('Health Monitoring Integration Tests', () => {
       // Assert
       // Status should be consistent (unless system conditions change dramatically)
       expect(response1.body.status).toBe(response2.body.status);
-      
+
       // Uptime should increase or stay the same
       expect(response2.body.uptime).toBeGreaterThanOrEqual(response1.body.uptime);
-      
+
       // Version should be the same
       expect(response1.body.version).toBe(response2.body.version);
     });
@@ -155,7 +155,7 @@ describe('Health Monitoring Integration Tests', () => {
 
       // Assert
       const { status, memory, uptime } = response.body;
-      
+
       // Validate status logic
       if (memory.percentage > 90) {
         expect(status).toBe('unhealthy');
@@ -173,7 +173,7 @@ describe('Health Monitoring Integration Tests', () => {
   describe('Error Handling', () => {
     it('should handle health check gracefully even under stress', async () => {
       // Arrange - Create multiple concurrent requests to stress the system
-      const stressRequests = Array(20).fill(null).map(() => 
+      const stressRequests = Array(20).fill(null).map(() =>
         request(app).get('/health')
       );
 
