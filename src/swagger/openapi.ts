@@ -6,7 +6,7 @@ import { config } from '../config';
  */
 function generateServerUrls(): OpenAPIV3.ServerObject[] {
   const servers: OpenAPIV3.ServerObject[] = [];
-  
+
   // If configured to show only production URL, return just that
   if (config.SWAGGER_SHOW_ONLY_PRODUCTION && config.PRODUCTION_URL) {
     return [{
@@ -14,19 +14,19 @@ function generateServerUrls(): OpenAPIV3.ServerObject[] {
       description: 'Production server'
     }];
   }
-  
+
   // Current server URL (dynamic based on environment)
   const currentPort = config.PORT;
   const currentHost = config.HOST;
   const protocol = config.HTTPS ? 'https' : 'http';
-  
+
   // Add current server as primary
   const currentUrl = `${protocol}://${currentHost}:${currentPort}`;
   servers.push({
     url: currentUrl,
     description: `Current server (${config.NODE_ENV})`
   });
-  
+
   // Add environment-specific servers
   if (config.NODE_ENV === 'development') {
     // Add localhost alternatives for development
@@ -51,12 +51,12 @@ function generateServerUrls(): OpenAPIV3.ServerObject[] {
       });
     }
   }
-  
+
   // Remove duplicates
-  const uniqueServers = servers.filter((server, index, self) => 
+  const uniqueServers = servers.filter((server, index, self) =>
     index === self.findIndex(s => s.url === server.url)
   );
-  
+
   return uniqueServers;
 }
 
@@ -88,29 +88,7 @@ export const openApiSpec: OpenAPIV3.Document = {
         tags: ['Time Operations'],
         parameters: [
           {
-            name: 'timezone',
-            in: 'path',
-            required: true,
-            description: 'IANA timezone identifier (e.g., America/New_York, Europe/London)',
-            schema: {
-              type: 'string',
-              pattern: '^[A-Za-z_]+/[A-Za-z_]+$',
-              example: 'America/New_York'
-            },
-            examples: {
-              'new-york': {
-                value: 'America/New_York',
-                summary: 'New York timezone'
-              },
-              'london': {
-                value: 'Europe/London',
-                summary: 'London timezone'
-              },
-              'tokyo': {
-                value: 'Asia/Tokyo',
-                summary: 'Tokyo timezone'
-              }
-            }
+            $ref: '#/components/parameters/TimezonePathParameter'
           }
         ],
         responses: {
@@ -140,36 +118,10 @@ export const openApiSpec: OpenAPIV3.Document = {
             }
           },
           '400': {
-            description: 'Invalid timezone parameter',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ErrorResponse'
-                },
-                examples: {
-                  'invalid-timezone': {
-                    summary: 'Invalid timezone format',
-                    value: {
-                      error: {
-                        code: 'INVALID_TIMEZONE',
-                        message: 'Invalid timezone identifier. Use IANA timezone format (e.g., America/New_York)',
-                        timestamp: '2024-01-15T14:30:00.000Z'
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            $ref: '#/components/responses/BadRequestError'
           },
           '500': {
-            description: 'Internal server error',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ErrorResponse'
-                }
-              }
-            }
+            $ref: '#/components/responses/InternalServerError'
           }
         }
       }
@@ -246,36 +198,10 @@ export const openApiSpec: OpenAPIV3.Document = {
             }
           },
           '400': {
-            description: 'Invalid timezone parameter',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ErrorResponse'
-                },
-                examples: {
-                  'invalid-timezone': {
-                    summary: 'Invalid timezone format',
-                    value: {
-                      error: {
-                        code: 'INVALID_TIMEZONE',
-                        message: 'Invalid timezone identifier. Use IANA timezone format (e.g., America/New_York)',
-                        timestamp: '2024-01-15T14:30:00.000Z'
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            $ref: '#/components/responses/BadRequestError'
           },
           '500': {
-            description: 'Internal server error',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ErrorResponse'
-                }
-              }
-            }
+            $ref: '#/components/responses/InternalServerError'
           }
         }
       }
@@ -345,43 +271,10 @@ export const openApiSpec: OpenAPIV3.Document = {
             }
           },
           '400': {
-            description: 'Invalid request parameters',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ErrorResponse'
-                },
-                examples: {
-                  'validation-error': {
-                    summary: 'Validation error example',
-                    value: {
-                      error: {
-                        code: 'VALIDATION_ERROR',
-                        message: 'Request validation failed',
-                        details: [
-                          {
-                            field: 'sourceTime',
-                            message: 'Invalid datetime format. Use ISO 8601 format or valid date string',
-                            code: 'INVALID_FORMAT'
-                          }
-                        ],
-                        timestamp: '2024-01-15T14:30:00.000Z'
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            $ref: '#/components/responses/BadRequestError'
           },
           '500': {
-            description: 'Internal server error',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ErrorResponse'
-                }
-              }
-            }
+            $ref: '#/components/responses/InternalServerError'
           }
         }
       }
@@ -450,6 +343,84 @@ export const openApiSpec: OpenAPIV3.Document = {
     }
   },
   components: {
+    parameters: {
+      TimezonePathParameter: {
+        name: 'timezone',
+        in: 'path',
+        required: true,
+        description: 'IANA timezone identifier (e.g., America/New_York, Europe/London)',
+        schema: {
+          type: 'string',
+          pattern: '^[A-Za-z_]+/[A-Za-z_]+$',
+          example: 'America/New_York'
+        },
+        examples: {
+          'new-york': {
+            value: 'America/New_York',
+            summary: 'New York timezone'
+          },
+          'london': {
+            value: 'Europe/London',
+            summary: 'London timezone'
+          },
+          'tokyo': {
+            value: 'Asia/Tokyo',
+            summary: 'Tokyo timezone'
+          }
+        }
+      }
+    },
+    responses: {
+      BadRequestError: {
+        description: 'Invalid request parameters',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ErrorResponse'
+            },
+            examples: {
+              'invalid-timezone': {
+                summary: 'Invalid timezone format',
+                value: {
+                  error: {
+                    code: 'INVALID_TIMEZONE',
+                    message: 'Invalid timezone identifier. Use IANA timezone format (e.g., America/New_York)',
+                    timestamp: '2024-01-15T14:30:00.000Z'
+                  }
+                }
+              },
+              'validation-error': {
+                summary: 'Validation error example',
+                value: {
+                  error: {
+                    code: 'VALIDATION_ERROR',
+                    message: 'Request validation failed',
+                    details: [
+                      {
+                        field: 'sourceTime',
+                        message: 'Invalid datetime format. Use ISO 8601 format or valid date string',
+                        code: 'INVALID_FORMAT'
+                      }
+                    ],
+                    timestamp: '2024-01-15T14:30:00.000Z'
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      InternalServerError: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ErrorResponse'
+            }
+          }
+        }
+      }
+    },
     schemas: {
       TimeResponse: {
         type: 'object',

@@ -85,19 +85,15 @@ export interface HealthResponse {
 // ============================================================================
 
 /**
- * Basic timezone validation function
- * This will be enhanced with actual timezone validation in the utils layer
+ * Import timezone validation from utilities
+ */
+import { isValidTimezone as isValidTimezoneUtil } from '../utils/timezone';
+
+/**
+ * Timezone validation function using actual Luxon validation
  */
 const isValidTimezone = (timezone: string): boolean => {
-  // Basic validation - will be replaced with proper Luxon validation
-  if (timezone.length === 0) return false;
-  
-  // Allow common timezone formats
-  const commonTimezones = ['UTC', 'GMT'];
-  if (commonTimezones.includes(timezone)) return true;
-  
-  // IANA timezone format (Region/City)
-  return timezone.includes('/') && timezone.split('/').length >= 2;
+  return isValidTimezoneUtil(timezone);
 };
 
 /**
@@ -134,12 +130,12 @@ export const conversionRequestSchema = z.object({
       // Try to parse the date - if it's valid, Date.parse won't return NaN
       const parsed = Date.parse(time);
       if (isNaN(parsed)) return false;
-      
+
       // Additional validation for common formats
       const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?([+-]\d{2}:\d{2}|Z)?$/;
       const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
       const basicDateRegex = /^\d{4}-\d{2}-\d{2}/;
-      
+
       return isoRegex.test(time) || dateOnlyRegex.test(time) || basicDateRegex.test(time);
     }, {
       message: "Invalid datetime format. Use ISO 8601 format or valid date string"

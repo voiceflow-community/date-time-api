@@ -4,6 +4,41 @@ import { getCurrentTime, convertTime } from '../../../src/controllers/timeContro
 import { timezoneService, TimezoneError } from '../../../src/services/TimezoneService.js';
 import { TimeResponse, ConversionResponse } from '../../../src/types/index.js';
 
+// Test helper functions to reduce duplication
+const createMockRequest = (method: string = 'GET', params?: any, body?: any): Partial<Request> => ({
+  method,
+  params: params || {},
+  body: body || {}
+});
+
+const createMockResponse = () => ({
+  status: vi.fn().mockReturnThis(),
+  json: vi.fn().mockReturnThis()
+});
+
+const expectSuccessfulResponse = (mockResponse: any, expectedData: any) => {
+  expect(mockResponse.status).toHaveBeenCalledWith(200);
+  expect(mockResponse.json).toHaveBeenCalledWith(expectedData);
+};
+
+const expectErrorResponse = (mockResponse: any, statusCode: number, errorData: any) => {
+  expect(mockResponse.status).toHaveBeenCalledWith(statusCode);
+  expect(mockResponse.json).toHaveBeenCalledWith({
+    error: {
+      ...errorData,
+      timestamp: expect.any(String)
+    }
+  });
+};
+
+const expectNextNotCalled = (mockNext: any) => {
+  expect(mockNext).not.toHaveBeenCalled();
+};
+
+const expectNextCalled = (mockNext: any, error: any) => {
+  expect(mockNext).toHaveBeenCalledWith(error);
+};
+
 // Mock the timezone service
 vi.mock('../../../src/services/TimezoneService.js', () => ({
   timezoneService: {
@@ -30,10 +65,7 @@ describe('timeController', () => {
 
   beforeEach(() => {
     mockRequest = {};
-    mockResponse = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
-    };
+    mockResponse = createMockResponse();
     mockNext = vi.fn();
     vi.clearAllMocks();
   });
@@ -53,8 +85,7 @@ describe('timeController', () => {
         }
       };
 
-      mockRequest.method = 'GET';
-      mockRequest.params = { timezone };
+      mockRequest = createMockRequest('GET', { timezone });
       vi.mocked(timezoneService.getCurrentTime).mockResolvedValue(expectedResponse);
 
       // Act
@@ -62,11 +93,10 @@ describe('timeController', () => {
 
       // Assert
       expect(timezoneService.getCurrentTime).toHaveBeenCalledWith(timezone);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
-      expect(mockNext).not.toHaveBeenCalled();
+      expectSuccessfulResponse(mockResponse, expectedResponse);
+      expectNextNotCalled(mockNext);
     });
-    
+
     it('should return current time for valid timezone using POST request', async () => {
       // Arrange
       const timezone = 'Europe/Paris';
@@ -81,8 +111,7 @@ describe('timeController', () => {
         }
       };
 
-      mockRequest.method = 'POST';
-      mockRequest.body = { timezone };
+      mockRequest = createMockRequest('POST', {}, { timezone });
       vi.mocked(timezoneService.getCurrentTime).mockResolvedValue(expectedResponse);
 
       // Act
@@ -90,9 +119,8 @@ describe('timeController', () => {
 
       // Assert
       expect(timezoneService.getCurrentTime).toHaveBeenCalledWith(timezone);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
-      expect(mockNext).not.toHaveBeenCalled();
+      expectSuccessfulResponse(mockResponse, expectedResponse);
+      expectNextNotCalled(mockNext);
     });
 
     it('should handle invalid timezone error with GET request', async () => {
@@ -105,8 +133,7 @@ describe('timeController', () => {
         [{ field: 'timezone', message: 'Invalid IANA timezone identifier', code: 'INVALID_FORMAT' }]
       );
 
-      mockRequest.method = 'GET';
-      mockRequest.params = { timezone };
+      mockRequest = createMockRequest('GET', { timezone });
       vi.mocked(timezoneService.getCurrentTime).mockRejectedValue(timezoneError);
 
       // Act
@@ -114,18 +141,14 @@ describe('timeController', () => {
 
       // Assert
       expect(timezoneService.getCurrentTime).toHaveBeenCalledWith(timezone);
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: {
-          code: 'INVALID_TIMEZONE',
-          message: 'Invalid timezone identifier',
-          details: [{ field: 'timezone', message: 'Invalid IANA timezone identifier', code: 'INVALID_FORMAT' }],
-          timestamp: expect.any(String)
-        }
+      expectErrorResponse(mockResponse, 400, {
+        code: 'INVALID_TIMEZONE',
+        message: 'Invalid timezone identifier',
+        details: [{ field: 'timezone', message: 'Invalid IANA timezone identifier', code: 'INVALID_FORMAT' }]
       });
-      expect(mockNext).not.toHaveBeenCalled();
+      expectNextNotCalled(mockNext);
     });
-    
+
     it('should handle invalid timezone error with POST request', async () => {
       // Arrange
       const timezone = 'Invalid/Timezone';
@@ -136,8 +159,7 @@ describe('timeController', () => {
         [{ field: 'timezone', message: 'Invalid IANA timezone identifier', code: 'INVALID_FORMAT' }]
       );
 
-      mockRequest.method = 'POST';
-      mockRequest.body = { timezone };
+      mockRequest = createMockRequest('POST', {}, { timezone });
       vi.mocked(timezoneService.getCurrentTime).mockRejectedValue(timezoneError);
 
       // Act
@@ -145,16 +167,12 @@ describe('timeController', () => {
 
       // Assert
       expect(timezoneService.getCurrentTime).toHaveBeenCalledWith(timezone);
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: {
-          code: 'INVALID_TIMEZONE',
-          message: 'Invalid timezone identifier',
-          details: [{ field: 'timezone', message: 'Invalid IANA timezone identifier', code: 'INVALID_FORMAT' }],
-          timestamp: expect.any(String)
-        }
+      expectErrorResponse(mockResponse, 400, {
+        code: 'INVALID_TIMEZONE',
+        message: 'Invalid timezone identifier',
+        details: [{ field: 'timezone', message: 'Invalid IANA timezone identifier', code: 'INVALID_FORMAT' }]
       });
-      expect(mockNext).not.toHaveBeenCalled();
+      expectNextNotCalled(mockNext);
     });
 
     it('should handle empty timezone parameter', async () => {
@@ -167,7 +185,7 @@ describe('timeController', () => {
         [{ field: 'timezone', message: 'Timezone cannot be empty', code: 'EMPTY' }]
       );
 
-      mockRequest.params = { timezone };
+      mockRequest = createMockRequest('GET', { timezone });
       vi.mocked(timezoneService.getCurrentTime).mockRejectedValue(timezoneError);
 
       // Act
@@ -175,14 +193,10 @@ describe('timeController', () => {
 
       // Assert
       expect(timezoneService.getCurrentTime).toHaveBeenCalledWith(timezone);
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: {
-          code: 'EMPTY_TIMEZONE',
-          message: 'Timezone cannot be empty',
-          details: [{ field: 'timezone', message: 'Timezone cannot be empty', code: 'EMPTY' }],
-          timestamp: expect.any(String)
-        }
+      expectErrorResponse(mockResponse, 400, {
+        code: 'EMPTY_TIMEZONE',
+        message: 'Timezone cannot be empty',
+        details: [{ field: 'timezone', message: 'Timezone cannot be empty', code: 'EMPTY' }]
       });
     });
 
@@ -195,21 +209,17 @@ describe('timeController', () => {
         500
       );
 
-      mockRequest.params = { timezone };
+      mockRequest = createMockRequest('GET', { timezone });
       vi.mocked(timezoneService.getCurrentTime).mockRejectedValue(internalError);
 
       // Act
       await getCurrentTime(mockRequest as Request, mockResponse as Response, mockNext);
 
       // Assert
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to get current time',
-          details: undefined,
-          timestamp: expect.any(String)
-        }
+      expectErrorResponse(mockResponse, 500, {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to get current time',
+        details: undefined
       });
     });
 
@@ -218,14 +228,14 @@ describe('timeController', () => {
       const timezone = 'America/New_York';
       const unexpectedError = new Error('Unexpected error');
 
-      mockRequest.params = { timezone };
+      mockRequest = createMockRequest('GET', { timezone });
       vi.mocked(timezoneService.getCurrentTime).mockRejectedValue(unexpectedError);
 
       // Act
       await getCurrentTime(mockRequest as Request, mockResponse as Response, mockNext);
 
       // Assert
-      expect(mockNext).toHaveBeenCalledWith(unexpectedError);
+      expectNextCalled(mockNext, unexpectedError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
@@ -253,7 +263,7 @@ describe('timeController', () => {
         utcOffsetDifference: '-5 hours'
       };
 
-      mockRequest.body = conversionRequest;
+      mockRequest = createMockRequest('POST', {}, conversionRequest);
       vi.mocked(timezoneService.convertTime).mockResolvedValue(expectedResponse);
 
       // Act
@@ -261,9 +271,8 @@ describe('timeController', () => {
 
       // Assert
       expect(timezoneService.convertTime).toHaveBeenCalledWith(conversionRequest);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
-      expect(mockNext).not.toHaveBeenCalled();
+      expectSuccessfulResponse(mockResponse, expectedResponse);
+      expectNextNotCalled(mockNext);
     });
 
     it('should handle validation errors', async () => {
@@ -284,7 +293,7 @@ describe('timeController', () => {
         ]
       );
 
-      mockRequest.body = invalidRequest;
+      mockRequest = createMockRequest('POST', {}, invalidRequest);
       vi.mocked(timezoneService.convertTime).mockRejectedValue(validationError);
 
       // Act
@@ -292,18 +301,14 @@ describe('timeController', () => {
 
       // Assert
       expect(timezoneService.convertTime).toHaveBeenCalledWith(invalidRequest);
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Validation failed for conversion request',
-          details: [
-            { field: 'sourceTime', message: 'Source time cannot be empty', code: 'EMPTY' },
-            { field: 'sourceTimezone', message: 'Invalid source timezone identifier', code: 'INVALID_FORMAT' },
-            { field: 'targetTimezone', message: 'Target timezone cannot be empty', code: 'EMPTY' }
-          ],
-          timestamp: expect.any(String)
-        }
+      expectErrorResponse(mockResponse, 400, {
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed for conversion request',
+        details: [
+          { field: 'sourceTime', message: 'Source time cannot be empty', code: 'EMPTY' },
+          { field: 'sourceTimezone', message: 'Invalid source timezone identifier', code: 'INVALID_FORMAT' },
+          { field: 'targetTimezone', message: 'Target timezone cannot be empty', code: 'EMPTY' }
+        ]
       });
     });
 
@@ -321,21 +326,17 @@ describe('timeController', () => {
         [{ field: 'sourceTime', message: 'Invalid datetime format', code: 'INVALID_FORMAT' }]
       );
 
-      mockRequest.body = invalidRequest;
+      mockRequest = createMockRequest('POST', {}, invalidRequest);
       vi.mocked(timezoneService.convertTime).mockRejectedValue(formatError);
 
       // Act
       await convertTime(mockRequest as Request, mockResponse as Response, mockNext);
 
       // Assert
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: {
-          code: 'INVALID_SOURCE_TIME',
-          message: 'Invalid source time format. Please use ISO 8601 format or a valid date string',
-          details: [{ field: 'sourceTime', message: 'Invalid datetime format', code: 'INVALID_FORMAT' }],
-          timestamp: expect.any(String)
-        }
+      expectErrorResponse(mockResponse, 400, {
+        code: 'INVALID_SOURCE_TIME',
+        message: 'Invalid source time format. Please use ISO 8601 format or a valid date string',
+        details: [{ field: 'sourceTime', message: 'Invalid datetime format', code: 'INVALID_FORMAT' }]
       });
     });
 

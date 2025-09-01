@@ -15,7 +15,7 @@ export async function getCurrentTime(
   try {
     // Extract timezone from either params (GET) or body (POST)
     let timezone: string | undefined;
-    
+
     if (req.method === 'GET') {
       timezone = req.params['timezone'];
     } else {
@@ -24,7 +24,7 @@ export async function getCurrentTime(
     }
 
     // Ensure timezone is defined (validation middleware should catch this before it gets here)
-    if (!timezone) {
+    if (timezone === undefined || timezone === null) {
       throw new TimezoneError(
         'Timezone parameter is required',
         'MISSING_TIMEZONE',

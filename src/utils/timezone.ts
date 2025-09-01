@@ -15,7 +15,7 @@ export function isValidTimezone(timezone: string): boolean {
     if (!zone.isValid) {
       return false;
     }
-    
+
     // Additional check to ensure it's a proper IANA timezone identifier
     // IANA timezones typically have format like "Area/Location" or are "UTC"
     // Reject common abbreviations that Luxon might accept but aren't proper IANA identifiers
@@ -23,12 +23,12 @@ export function isValidTimezone(timezone: string): boolean {
     if (abbreviations.includes(timezone.toUpperCase())) {
       return false;
     }
-    
+
     // Reject offset formats like GMT+5, UTC+2, etc.
     if (/^(GMT|UTC)[+-]\d+$/.test(timezone)) {
       return false;
     }
-    
+
     return true;
   } catch {
     return false;
@@ -47,7 +47,7 @@ export function getCurrentTimeInTimezone(timezone: string) {
   }
 
   const now = DateTime.now().setZone(timezone);
-  
+
   if (!now.isValid) {
     throw new Error(`Failed to get current time for timezone: ${timezone}`);
   }
@@ -88,27 +88,27 @@ export function convertTimeBetweenTimezones(
   if (!isValidTimezone(sourceTimezone)) {
     throw new Error(`Invalid source timezone: ${sourceTimezone}`);
   }
-  
+
   if (!isValidTimezone(targetTimezone)) {
     throw new Error(`Invalid target timezone: ${targetTimezone}`);
   }
 
   // Parse source time
   let sourceDateTime: DateTime;
-  
+
   try {
     // Try parsing as ISO string first
     sourceDateTime = DateTime.fromISO(sourceTime, { zone: sourceTimezone });
-    
+
     // If not valid, try other common formats
     if (!sourceDateTime.isValid) {
       sourceDateTime = DateTime.fromFormat(sourceTime, 'yyyy-MM-dd HH:mm:ss', { zone: sourceTimezone });
     }
-    
+
     if (!sourceDateTime.isValid) {
       sourceDateTime = DateTime.fromFormat(sourceTime, 'yyyy-MM-dd', { zone: sourceTimezone });
     }
-    
+
     if (!sourceDateTime.isValid) {
       throw new Error('Unable to parse source time');
     }
@@ -118,7 +118,7 @@ export function convertTimeBetweenTimezones(
 
   // Convert to target timezone
   const targetDateTime = sourceDateTime.setZone(targetTimezone);
-  
+
   if (!targetDateTime.isValid) {
     throw new Error(`Failed to convert time to target timezone: ${targetTimezone}`);
   }
@@ -126,12 +126,17 @@ export function convertTimeBetweenTimezones(
   // Calculate UTC offset difference
   const offsetDifferenceMinutes = targetDateTime.offset - sourceDateTime.offset;
   const offsetDifferenceHours = offsetDifferenceMinutes / 60;
-  const offsetDifferenceFormatted = `${offsetDifferenceHours >= 0 ? '+' : ''}${offsetDifferenceHours.toFixed(1)}h`;
+
+  // Format as ±HH:MM
+  const absHours = Math.abs(Math.floor(offsetDifferenceHours));
+  const absMinutes = Math.abs(offsetDifferenceMinutes % 60);
+  const sign = offsetDifferenceMinutes >= 0 ? '+' : '-';
+  const offsetDifferenceFormatted = `${sign}${absHours.toString().padStart(2, '0')}:${absMinutes.toString().padStart(2, '0')}`;
 
   // Ensure ISO strings are not null
   const originalISO = sourceDateTime.toISO();
   const convertedISO = targetDateTime.toISO();
-  
+
   if (!originalISO || !convertedISO) {
     throw new Error('Failed to generate ISO timestamp for conversion');
   }
